@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>CRUD de Usuarios</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    .btn { padding: 5px 10px; cursor: pointer; border: none; border-radius: 3px; }
+    .btn-primary { background: #007bff; color: white; }
+    .btn-warning { background: #ffc107; }
+    .btn-danger { background: #dc3545; color: white; }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); }
+    .modal-content { background: white; width: 350px; margin: 100px auto; padding: 20px; }
+  </style>
+</head>
+<body>
+
+  <h2>Gestión de Usuarios</h2>
+  <button class="btn btn-primary" onclick="abrirModal()">+ Nuevo Usuario</button>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Apellidos</th>
+        <th>Correo</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody id="usuarios-tabla"></tbody>
+  </table>
+
+  <!-- Modal -->
+  <div id="modal-usuario" class="modal">
+    <div class="modal-content">
+      <h3 id="modal-titulo">Usuario</h3>
+      <form id="form-usuario">
+        <input type="hidden" id="usuario-id">
+        <div><label>Nombre:</label><br><input type="text" id="nombre" required></div><br>
+        <div><label>Apellidos:</label><br><input type="text" id="apellidos" required></div><br>
+        <div><label>Correo:</label><br><input type="email" id="correo" required></div><br>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+        <button type="button" class="btn btn-danger" onclick="cerrarModal()">Cancelar</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
+5.2 Archivo app.js
+✏️ RETO DEL ALUMNO: Completa las peticiones fetch en el JavaScript.
+const API_URL = 'http://localhost:3000/api/usuarios';
+
+const tabla = document.getElementById('usuarios-tabla');
+const modal = document.getElementById('modal-usuario');
+const formUsuario = document.getElementById('form-usuario');
+
+function abrirModal(u = null) {
+  modal.style.display = 'block';
+  if (u) {
+    document.getElementById('modal-titulo').textContent = 'Editar Usuario';
+    document.getElementById('usuario-id').value = u.id;
+    document.getElementById('nombre').value = u.nombre;
+    document.getElementById('apellidos').value = u.apellidos;
+    document.getElementById('correo').value = u.correo;
+  } else {
+    document.getElementById('modal-titulo').textContent = 'Nuevo Usuario';
+    formUsuario.reset();
+    document.getElementById('usuario-id').value = '';
+  }
+}
+
+function cerrarModal() {
+  modal.style.display = 'none';
+}
+
+// 1. GET: Cargar Datos
+async function cargarDatos() {
+  try {
+    const respuesta = await fetch(API_URL);
+    const datos = await respuesta.json();
+    tabla.innerHTML = '';
+    const fragmento = document.createDocumentFragment();
+
+    datos.forEach(u => {
+      const fila = document.createElement('tr');
+      const tdNombre = document.createElement('td'); tdNombre.textContent = u.nombre ?? '';
+      const tdApellidos = document.createElement('td'); tdApellidos.textContent = u.apellidos ?? '';
+      const tdCorreo = document.createElement('td'); tdCorreo.textContent = u.correo ?? '';
+
+      const tdAcciones = document.createElement('td');
+      const btnEditar = document.createElement('button');
+      btnEditar.className = 'btn btn-warning';
+      btnEditar.textContent = 'Editar';
+      btnEditar.onclick = () => abrirModal(u);
+
+      const btnEliminar = document.createElement('button');
+      btnEliminar.className = 'btn btn-danger';
+      btnEliminar.style.marginLeft = '5px';
+      btnEliminar.textContent = 'Eliminar';
+      btnEliminar.onclick = () => eliminarUsuario(u.id);
+
+      tdAcciones.append(btnEditar, btnEliminar);
+      fila.append(tdNombre, tdApellidos, tdCorreo, tdAcciones);
+      fragmento.appendChild(fila);
+    });
+
+    tabla.appendChild(fragmento);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// 2. POST / PUT: Crear o Editar (RETO ALUMNO)
+formUsuario.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const id = document.getElementById('usuario-id').value;
+  const usuarioData = {
+    nombre: document.getElementById('nombre').value,
+    apellidos: document.getElementById('apellidos').value,
+    correo: document.getElementById('correo').value
+  };
+
+  /* ✏️ TODO ALUMNO:
+     1. Si 'id' existe -> fetch con PUT a `${API_URL}/${id}`
+     2. Si 'id' NO existe -> fetch con POST a API_URL
+     3. Convertir 'usuarioData' con JSON.stringify()
+     4. Ejecutar cargarDatos() y cerrarModal()
+  */
+
+  cerrarModal();
+});
+
+// 3. DELETE: Eliminar Usuario (RETO ALUMNO)
+async function eliminarUsuario(id) {
+  if (!confirm('¿Eliminar usuario?')) return;
+
+  /* ✏️ TODO ALUMNO:
+     1. Fetch con DELETE a `${API_URL}/${id}`
+     2. Validar respuesta y llamar a cargarDatos()
+  */
+}
+
+document.addEventListener('DOMContentLoaded', cargarDatos);
